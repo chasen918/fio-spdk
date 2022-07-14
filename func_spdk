@@ -1,0 +1,20 @@
+#!/bin/bash
+
+function setup_spdk() {
+    spdk_root_dir=$1
+    white_list=$2
+    huge_mem=$3
+
+    if [ -z "${huge_mem}" ]
+    then
+        huge_mem=16384
+    fi
+    # PCI_WHITELIST="${white_list}" ${spdk_dir}/scripts/setup.sh
+    HUGEMEM=${huge_mem} PCI_WHITELIST="${white_list}" ${spdk_root_dir}/scripts/setup.sh > /dev/null 2>&1
+}
+
+function reset_spdk() {
+    spdk_root_dir=$1
+    white_list=$2
+    PCI_WHITELIST="${white_list}" ${spdk_root_dir}/scripts/setup.sh reset > /dev/null 2>&1
+}
