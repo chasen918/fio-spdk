@@ -72,6 +72,34 @@ echo -e "$0 $@\n"        > ${output_dir}/sysinfo.log
 echo "${nvme_dev_info}" >> ${output_dir}/sysinfo.log
 collect_sys_info        >> ${output_dir}/sysinfo.log
 
+test_disks=""
+
+for disk in ${disks[@]}
+do
+    ls /dev/${disk} > /dev/null 2>&1
+    if [ $? -ne 0 ]
+    then
+        echo "${disk} does not exist, please check name"
+        continue
+    fi
+
+    nvme_has_mnt_pnt ${disk}
+    if [ $? -ne 0 ]
+    then
+        echo "${disk} has mount point on it, skipping for test"
+        continue
+    fi
+    test_disks=(${test_disks[@]} ${disk})
+done
+
+disks=(${test_disks[@]})
+
+if [ -z "${disks}" ]
+then
+    echo "no valid nvme drive for testing, please check provided parameters"
+    exit 1
+fi
+
 if [ "${type}" == "spdk" ]
 then
     # prepare spdk environment
@@ -96,8 +124,10 @@ then
     disks=(${spdk_disks[@]})
     export ioengine=spdk
     echo "start fio test using spdk"
+    echo "on drives: [${disks[@]}]"
 else
-    echo "start fio test using conventional nvme device"
+    echo "start fio test using conventional nvme driver"
+    echo "on drives: [${disks[@]}]"
 fi
 
 bind_cnt=0

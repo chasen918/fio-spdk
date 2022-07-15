@@ -240,3 +240,14 @@ function calculate_wa() {
         echo "${disk},${workload},${host_written},${nand_written},""N/A"
     fi
 }
+
+function nvme_has_mnt_pnt() {
+    drv=$1
+    retcode=0
+    mnt_pnt=$(lsblk -f | grep ${drv} | sed -r "s/\s+/,/g" | cut -d, -f 4)
+    if [ ! -z "${mnt_pnt}" ]
+    then
+        retcode=1
+    fi
+    return ${retcode}
+}
