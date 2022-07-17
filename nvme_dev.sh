@@ -22,22 +22,52 @@ function nvme2busid_spdk() {
     echo ${bdf/:/.}
 }
 
-function nvme2numa() {
-    drv_name=$1
-    bdf=$(nvme2busid ${drv_name})
+function busid2lspci_vv() {
+    bdf=$1
     if [ ! -z "${bdf}" ]
     then
-        echo $(lspci -s ${bdf} -v | grep NUMA | sed -r "s/.*NUMA node\s+([0-9]+).*/\1/g")
+        echo "$(lspci -s ${bdf} -vv)"
     else
         echo ""
-    fi    
+    fi 
+}
+
+function lspci_vv2numa() {
+    lspci_vv=$1
+    if [ ! -z "${lspci_vv}" ]
+    then
+        echo $(echo "${lspci_vv}" | grep NUMA | sed -r "s/.*NUMA node:\s+([0-9]+).*/\1/g")
+    else
+        echo ""
+    fi 
 }
 
 function busid2numa() {
     bdf=$1
     if [ ! -z "${bdf}" ]
     then
-        echo $(lspci -s ${bdf} -v | grep NUMA | sed -r "s/.*NUMA node\s+([0-9]+).*/\1/g")
+        echo $(lspci -s ${bdf} -v | grep NUMA | sed -r "s/.*NUMA node:\s+([0-9]+).*/\1/g")
+    else
+        echo ""
+    fi 
+}
+
+function nvme2numa() {
+    drv_name=$1
+    bdf=$(nvme2busid ${drv_name})
+    if [ ! -z "${bdf}" ]
+    then
+        echo $(busid2numa ${bdf})
+    else
+        echo ""
+    fi    
+}
+
+function lspci_vv2desc() {
+    lspci_vv=$1
+    if [ ! -z "${lspci_vv}" ]
+    then
+        echo $(echo "${lspci_vv}" | grep "Non-Volatile" | cut -d: -f3-)
     else
         echo ""
     fi 
@@ -48,14 +78,61 @@ function busid2desc() {
     echo $(lspci -s ${bdf} | cut -d: -f3-)
 }
 
+function lspci_vv2lnksta() {
+    lspci_vv=$1
+    if [ ! -z "$(echo ${lspci_vv} | grep '\[virtual\]')" ]
+    then
+        echo "VF?"
+    else
+        echo $(echo "${lspci_vv}" | grep LnkSta: | sed -r "s/.*\s+([0-9]+GT).*,.*(x[0-9]+).*/\1+\2/g")
+    fi 
+}
+
 function busid2lnksta() {
     bdf=$1
-    echo $(lspci -s ${bdf} -vv | grep LnkSta: | sed -r "s/.*\s+([0-9]+GT).*,.*(x[0-9]+).*/\1+\2/g")
+    lspci_vv=$(lspci -s ${bdf} -vv)
+    if [ ! -z "$(echo ${lspci_vv} | grep '\[virtual\]')" ]
+    then
+        echo "VF"
+    else
+        echo $(echo "${lspci_vv}" | grep LnkSta: | sed -r "s/.*\s+([0-9]+GT).*,.*(x[0-9]+).*/\1+\2/g")
+    fi
+}
+
+function lspci_vv2max_pl_rrq() {
+    lspci_vv=$1
+    if [ ! -z "${lspci_vv}" ]
+    then
+        echo $(echo "${lspci_vv}" | grep DevCtl: -A2 | grep MaxPayload | sed -r "s/\s+MaxPayload\s+([0-9]+)\s+.*MaxReadReq\s+([0-9]+)\s+.*/\1+\2/g")
+    else
+        echo ""
+    fi 
 }
 
 function busid2max_pl_rrq() {
     bdf=$1
     echo $(lspci -s ${bdf} -vv | grep DevCtl: -A2 | grep MaxPayload | sed -r "s/\s+MaxPayload\s+([0-9]+)\s+.*MaxReadReq\s+([0-9]+)\s+.*/\1+\2/g")
+}
+
+function lspci_vv2is_phy_dev() {
+    lspci_vv=$1
+    if [ ! -z "${lspci_vv}" ]
+    then
+        echo $(echo "${lspci_vv}" | grep "\[virtual\]")
+    else
+        echo ""
+    fi 
+}
+
+function is_physical_dev() {
+    bdf=$1
+    phy_slot=$(lspci -s ${bdf} -v | grep "Physical Slot:")
+    is_phy_slot=1
+    if [ -z "${phy_slot}" ]
+    then
+        is_phy_slot=0
+    fi
+    echo ${is_phy_slot}
 }
 
 if [ ! -z "`nvme list | grep nvme`" ]
@@ -70,10 +147,11 @@ then
         if [ ! -z "${bdf}" ]
         then 
             temp=$(nvme smart-log /dev/${drv} | grep temperature | cut -d: -f2)
-            numa_node=$(nvme2numa ${drv})
-            lnksta=$(busid2lnksta ${bdf})
-            max_pl_rq=$(busid2max_pl_rrq ${bdf})
-            desc=$(busid2desc ${bdf})
+            lspci_vv="$(lspci -s ${bdf} -vv)"
+            numa_node=$(lspci_vv2numa "${lspci_vv}")
+            lnksta=$(lspci_vv2lnksta "${lspci_vv}")
+            max_pl_rq=$(lspci_vv2max_pl_rrq "${lspci_vv}")
+            desc=$(lspci_vv2desc "${lspci_vv}")
             # echo ${drv}, ${bdf}, ${numa_node}, ${lnksta}, ${max_pl_rq}, ${temp}, ${desc}
             printf "${print_fmt}" ${drv} ${bdf} ${numa_node} ${lnksta} ${max_pl_rq} "${temp}" "${desc}"
         else
@@ -87,11 +165,12 @@ else
     printf "${print_fmt}" bdf numa lnksta max_pl+rrq desc
     for pcie_dev in  `lspci | grep "Non-Volatile memory controller" | cut -d" " -f1`
     do
-        drv=""
         bdf=${pcie_dev}
-        numa_node=$(busid2numa ${pcie_dev})
-        max_pl_rq=$(busid2max_pl_rrq ${bdf})
-        desc=$(lspci -s ${bdf} | cut -d" " -f2-)
+        lspci_vv="$(lspci -s ${bdf} -vv)"
+        numa_node=$(lspci_vv2numa "${lspci_vv}")
+        lnksta=$(lspci_vv2lnksta "${lspci_vv}")
+        max_pl_rq=$(lspci_vv2max_pl_rrq "${lspci_vv}")
+        desc=$(lspci_vv2desc "${lspci_vv}")
         if [ ! -z "${bdf}" ]
         then
             # echo ${bdf},${numa_node},${lnksta},${max_pl_rq},${desc}

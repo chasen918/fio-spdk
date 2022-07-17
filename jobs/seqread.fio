@@ -6,8 +6,9 @@ thread
 group_reporting
 name=baseline
 
-[seqread_128K_j1_qd128]
+[fio_job_configs]
 stonewall
+name=seqread_128k_j${seq_job_cnt}_qd${seq_job_qd}
 size=100%
 bs=128k
 rw=read

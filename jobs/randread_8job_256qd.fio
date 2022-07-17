@@ -6,8 +6,9 @@ thread
 group_reporting
 name=baseline
 
-[randread_4k_j8_qd256]
+[fio_job_configs]
 stonewall
+name=randread_4k_j8_qd256
 size=100%
 bs=4k
 rw=randread

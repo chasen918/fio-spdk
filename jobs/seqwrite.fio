@@ -6,8 +6,9 @@ thread
 group_reporting
 name=baseline
 
-[seqwrite_128K_j1_qd128]
+[fio_job_configs]
 stonewall
+name=seqwrite_128k_j${seq_job_cnt}_qd${seq_job_qd}
 size=100%
 bs=128K
 rw=write

@@ -4,15 +4,15 @@ ioengine=${ioengine}
 direct=1
 thread
 group_reporting
-name=baseline
 
-[randread_4k_j8_qd32]
+[fio_job_configs]
 stonewall
+name=randread_4k_j${rand_job_cnt}_qd${rand_job_qd}
 size=100%
 bs=4k
 rw=randread
-numjobs=8
-iodepth=32
+numjobs=${rand_job_cnt}
+iodepth=${rand_job_qd}
 time_based
 ramp_time=${ramp_time}
 runtime=${runtime}
