@@ -244,7 +244,7 @@ function calculate_wa() {
 function nvme_has_mnt_pnt() {
     drv=$1
     retcode=0
-    mnt_pnt=$(lsblk -f | grep ${drv} | sed -r "s/\s+/,/g" | cut -d, -f 4)
+    mnt_pnt=$(lsblk | grep ${drv} | sed -r "s/\s+/,/g" | cut -d, -f 7)
     if [ ! -z "${mnt_pnt}" ]
     then
         retcode=1
