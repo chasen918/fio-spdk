@@ -241,10 +241,11 @@ function calculate_wa() {
     fi
 }
 
+# detect if block devices is mounted or has file system
 function nvme_has_mnt_pnt() {
     drv=$1
     retcode=0
-    mnt_pnt=$(lsblk | grep ${drv} | sed -r "s/\s+/,/g" | cut -d, -f 7)
+    mnt_pnt=$(lsblk -f -o kname,fstype,mountpoint | grep ${drv} | sed -r "s/\s+/,/g" | cut -d, -f 2,3)
     if [ ! -z "${mnt_pnt}" ]
     then
         retcode=1

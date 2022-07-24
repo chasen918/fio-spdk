@@ -86,7 +86,7 @@ do
     nvme_has_mnt_pnt ${disk}
     if [ $? -ne 0 ]
     then
-        echo "${disk} has mount point on it, skipping for test"
+        echo "${disk} is mounted or contains file system, skipping it for test"
         continue
     fi
     test_disks=(${test_disks[@]} ${disk})
