@@ -99,7 +99,7 @@ function busid2lnksta() {
     fi
 }
 
-function lspci_vv2max_pl_rrq() {
+function lspci_vv2_mps_mrrs() {
     lspci_vv=$1
     if [ ! -z "${lspci_vv}" ]
     then
@@ -109,7 +109,7 @@ function lspci_vv2max_pl_rrq() {
     fi 
 }
 
-function busid2max_pl_rrq() {
+function busid2_mps_mrrs() {
     bdf=$1
     echo $(lspci -s ${bdf} -vv | grep DevCtl: -A2 | grep MaxPayload | sed -r "s/\s+MaxPayload\s+([0-9]+)\s+.*MaxReadReq\s+([0-9]+)\s+.*/\1+\2/g")
 }
@@ -137,9 +137,9 @@ function is_physical_dev() {
 
 if [ ! -z "`nvme list | grep nvme`" ]
 then
-    # echo "drive,bdf,numa_node,lnksta,max_pl+rrq,temp,desc"
+    # echo "drive,bdf,numa_node,lnksta,mps+mrrs,temp,desc"
     print_fmt="%9s%9s%6s%9s%12s%6s  %-s\n"
-    printf "${print_fmt}" drive bdf numa lnksta max_pl+rrq temp desc
+    printf "${print_fmt}" drive bdf numa lnksta mps+mrrs temp desc
     for nvme_dev in  `nvme list | sort -V | grep /dev/nvme | cut -d" " -f1`
     do 
         drv=${nvme_dev##*/}
@@ -150,31 +150,31 @@ then
             lspci_vv="$(lspci -s ${bdf} -vv)"
             numa_node=$(lspci_vv2numa "${lspci_vv}")
             lnksta=$(lspci_vv2lnksta "${lspci_vv}")
-            max_pl_rq=$(lspci_vv2max_pl_rrq "${lspci_vv}")
+            max_mps_mrrs=$(lspci_vv2_mps_mrrs "${lspci_vv}")
             desc=$(lspci_vv2desc "${lspci_vv}")
-            # echo ${drv}, ${bdf}, ${numa_node}, ${lnksta}, ${max_pl_rq}, ${temp}, ${desc}
-            printf "${print_fmt}" ${drv} ${bdf} ${numa_node} ${lnksta} ${max_pl_rq} "${temp}" "${desc}"
+            # echo ${drv}, ${bdf}, ${numa_node}, ${lnksta}, ${max_mps_mrrs}, ${temp}, ${desc}
+            printf "${print_fmt}" ${drv} ${bdf} ${numa_node} ${lnksta} ${max_mps_mrrs} "${temp}" "${desc}"
         else
             echo "${drv},info not availble"
         fi
     done
 else
-    header="bdf,numa_node,lnksta,max_pl+rrq,desc"
-    # header=(bdf numa lnksta max_pl+rrq desc)
+    header="bdf,numa_node,lnksta,mps+mrrs,desc"
+    # header=(bdf numa lnksta mps+mrrs desc)
     print_fmt="%9s%6s%9s%12s  %-s\n"
-    printf "${print_fmt}" bdf numa lnksta max_pl+rrq desc
+    printf "${print_fmt}" bdf numa lnksta mps+mrrs desc
     for pcie_dev in  `lspci | grep "Non-Volatile memory controller" | cut -d" " -f1`
     do
         bdf=${pcie_dev}
         lspci_vv="$(lspci -s ${bdf} -vv)"
         numa_node=$(lspci_vv2numa "${lspci_vv}")
         lnksta=$(lspci_vv2lnksta "${lspci_vv}")
-        max_pl_rq=$(lspci_vv2max_pl_rrq "${lspci_vv}")
+        max_mps_mrrs=$(lspci_vv2_mps_mrrs "${lspci_vv}")
         desc=$(lspci_vv2desc "${lspci_vv}")
         if [ ! -z "${bdf}" ]
         then
-            # echo ${bdf},${numa_node},${lnksta},${max_pl_rq},${desc}
-            printf "${print_fmt}" ${bdf} ${numa_node} ${lnksta} ${max_pl_rq} "${desc}"
+            # echo ${bdf},${numa_node},${lnksta},${max_mps_mrrs},${desc}
+            printf "${print_fmt}" ${bdf} ${numa_node} ${lnksta} ${max_mps_mrrs} "${desc}"
         fi
     done
 fi
