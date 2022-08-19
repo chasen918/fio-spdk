@@ -2,26 +2,22 @@
 
 # export ioengine=spdk
 export percentile_list=1:5:10:25:50:75:90:95:99:99.5:99.9:99.99:99.999:99.9999:99.99999:99.999999
-############################################
 export ramp_time=5
 export ramp_time_randwrite=0
-export runtime=30
+export runtime=10
 # export ramp_time=60
-# export ramp_time_randwrite=900
-# export runtime=1200
-############################################
+# export ramp_time_randwrite=1200
+# export runtime=1800
 export ioengine=${ioengine-libaio}
 export bind_opt=${bind_opt-"--cpus_allowed"}
 export rand_job_cnt=8
 export rand_job_qd=32
+# export workloads_precond=( \
+#     precond_seq \
+#     )
 export workloads=( \
-    precond_seq \
     seqwrite \
     seqread \
     randwrite \
-    randrw73 \
-    randrw55 \
-    randrw37 \
     randread \
-    randread_8job_256qd \
     )
