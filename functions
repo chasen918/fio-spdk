@@ -187,23 +187,38 @@ function consolidate_summary() {
             echo ""              >> ${headers}
             echo "99.9th clat"   >> ${headers}
             echo "${header_txt}" >> ${headers}
+            echo ""              >> ${headers}
+            echo "99.9999th clat">> ${headers}
+            echo "${header_txt}" >> ${headers}
         fi
-
+        # IOPS
         echo "" > ${result}
         echo ${disk_name} >> ${result}
         cat $f | grep -v IOPS | cut -d, -f 4 >> ${result}
+
+        # BW
         echo "" >> ${result}
         echo "" >> ${result}
         echo ${disk_name} >> ${result}
         cat $f | grep -v BW   | cut -d, -f 5 >> ${result}
+        
+        # avg lat
         echo "" >> ${result}
         echo "" >> ${result}
         echo ${disk_name}, >> ${result}
         cat $f | grep -v BW   | cut -d, -f 6,9 >> ${result}
+
+        # 99.9 clat
         echo "" >> ${result}
         echo "" >> ${result}
         echo ${disk_name}, >> ${result}
         cat $f | grep -v BW   | cut -d, -f 11,14 >> ${result}
+
+        # 99.9999 clat
+        echo "" >> ${result}
+        echo "" >> ${result}
+        echo ${disk_name}, >> ${result}
+        cat $f | grep -v BW   | cut -d, -f 11,17 >> ${result}
 
         result_list="${result_list} ${result}"
     done
@@ -241,14 +256,14 @@ function calculate_wa() {
     fi
 }
 
-# detect if block devices is mounted or has file system
 function nvme_has_mnt_pnt() {
     drv=$1
     retcode=0
-    mnt_pnt=$(lsblk -f -o kname,fstype,mountpoint | grep ${drv} | sed -r "s/\s+/,/g" | cut -d, -f 2,3)
+    mnt_pnt=$(lsblk -f | grep ${drv} | sed -r "s/\s+/,/g" | cut -d, -f 4)
     if [ ! -z "${mnt_pnt}" ]
     then
         retcode=1
     fi
     return ${retcode}
 }
+
